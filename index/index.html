@@ -11,6 +11,7 @@
     body {
       margin: 0;
       min-height: 100vh;
+      padding: 24px 0;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -95,6 +96,18 @@
       font-size: 13px;
     }
 
+    .contact { margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e9f0; text-align: left; }
+    .contact h2 { margin: 0 0 8px; color: #24314c; font-size: 22px; }
+    .contact p { line-height: 1.6; font-size: 14px; }
+    .contact label { display: block; margin-top: 16px; color: #24314c; font-size: 14px; font-weight: bold; }
+    .contact input, .contact textarea { display: block; width: 100%; margin-top: 7px; padding: 12px; border: 1px solid #cbd3df; border-radius: 8px; background: #fff; color: #24314c; font: inherit; font-size: 16px; }
+    .contact textarea { min-height: 130px; resize: vertical; }
+    .contact input:focus-visible, .contact textarea:focus-visible, button:focus-visible { outline: 3px solid #3b8dce; outline-offset: 3px; }
+    .contact .optional { color: #777; font-weight: normal; }
+    .contact .privacy { font-size: 12px; }
+    .contact button:disabled { opacity: .65; cursor: wait; }
+    #contact-status { margin-bottom: 0; color: #24314c; }
+
     @media (max-width: 450px) {
       .container { padding: 25px 10px; }
       .lotto-row { gap: 4px; padding: 8px 4px; }
@@ -120,9 +133,54 @@
     </button>
 
     <div id="count">아직 추첨하지 않았습니다.</div>
+
+    <section class="contact" aria-labelledby="contact-title">
+      <h2 id="contact-title">제휴문의</h2>
+      <p>함께할 좋은 아이디어가 있으신가요? 문의를 남겨주시면 이메일로 답변드리겠습니다.</p>
+      <form id="contact-form" action="https://formspree.io/f/maeekzrd" method="POST">
+        <label for="contact-name">이름 / 담당자명</label>
+        <input id="contact-name" name="name" type="text" autocomplete="name" maxlength="100" required>
+        <label for="contact-email">이메일</label>
+        <input id="contact-email" name="email" type="email" autocomplete="email" maxlength="254" required>
+        <label for="contact-company">회사 / 브랜드 <span class="optional">(선택)</span></label>
+        <input id="contact-company" name="company" type="text" autocomplete="organization" maxlength="150">
+        <label for="contact-message">문의 내용</label>
+        <textarea id="contact-message" name="message" placeholder="제휴 제안이나 궁금한 내용을 알려주세요." maxlength="5000" required></textarea>
+        <p class="privacy">입력하신 정보는 제휴문의 확인 및 답변을 위해 Formspree로 전송됩니다.</p>
+        <button type="submit" id="contact-submit">제휴문의 보내기</button>
+        <p id="contact-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
   </div>
 
   <script>
+    const contactForm = document.getElementById("contact-form");
+    const contactButton = document.getElementById("contact-submit");
+    const contactStatus = document.getElementById("contact-status");
+
+    contactForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (contactButton.disabled) return;
+      contactButton.disabled = true;
+      contactButton.textContent = "보내는 중…";
+      contactStatus.textContent = "";
+      try {
+        const response = await fetch(contactForm.action, {
+          method: "POST",
+          body: new FormData(contactForm),
+          headers: { Accept: "application/json" }
+        });
+        if (!response.ok) throw new Error("Submission failed");
+        contactForm.reset();
+        contactStatus.textContent = "문의가 접수되었습니다. 남겨주신 이메일로 답변드리겠습니다.";
+      } catch (error) {
+        contactStatus.textContent = "문의를 보내지 못했습니다. 잠시 후 다시 시도해 주세요. 입력하신 내용은 유지됩니다.";
+      } finally {
+        contactButton.disabled = false;
+        contactButton.textContent = "제휴문의 보내기";
+      }
+    });
+
     let drawCount = 0;
 
     // 페이지를 열면 빈 번호 5줄 표시
